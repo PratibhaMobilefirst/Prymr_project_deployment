@@ -1,0 +1,54 @@
+.layout-container {
+  /* height: 375px; */
+  width: 347px;
+  justify-content: center;
+  /* background-color: black; */
+}
+.text1 {
+  font-family: Nunito;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 35.46px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.text2 {
+  font-family: Nunito;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 21.82px;
+  text-align: center;
+  color: #e2e2e2;
+}
+
+.slider {
+  margin-top: 10px;
+  margin-left: 35%;
+  width: (56px);
+  height: (50px);
+  padding: 5px 10px 5px 10px;
+  gap: 3px;
+  opacity: 0px;
+}
+
+.border {
+  border: solid;
+  border-color: silver;
+}
+
+@media screen and (max-width: 1440px) and (max-height: 824px) {
+  .h {
+    height: 100vh;
+  }
+
+  .logo {
+    justify-content: center;
+  }
+}
+
+/* .button-group{
+  width: 347px;
+  height: 405px;
+  margin-top: 2px;
+} */
