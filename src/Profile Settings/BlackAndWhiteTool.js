@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
-import cross from "../assets/images/cross.png";
+import React, { useState, useEffect } from "react";
 import undo from "../assets/images/undo.svg";
 import redo from "../assets/images/redo.svg";
 
-const GlamourTool = ({ image, onClose, onApply }) => {
-  const [glamourLevel, setGlamourLevel] = useState(50);
+const BlackAndWhiteTool = ({ image, onClose, onApply }) => {
+  const [brightness, setBrightness] = useState(0);
+  const [contrast, setContrast] = useState(0);
+  const [grain, setGrain] = useState(0);
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const canvasRef = useRef(null);
 
-  const applyGlamourEffect = () => {
-    const canvas = canvasRef.current;
+  const applyBlackAndWhiteEffect = () => {
+    const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -21,21 +21,29 @@ const GlamourTool = ({ image, onClose, onApply }) => {
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
+
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
 
       for (let i = 0; i < data.length; i += 4) {
-        if (isSkinTone(data[i], data[i + 1], data[i + 2])) {
-          data[i] = smoothColor(data[i], glamourLevel);
-          data[i + 1] = smoothColor(data[i + 1], glamourLevel);
-          data[i + 2] = smoothColor(data[i + 2], glamourLevel);
-        }
+        // Convert to grayscale
+        const gray =
+          0.2989 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
 
-        if (isEyeOrLip(data[i], data[i + 1], data[i + 2])) {
-          data[i] = enhanceColor(data[i], glamourLevel);
-          data[i + 1] = enhanceColor(data[i + 1], glamourLevel);
-          data[i + 2] = enhanceColor(data[i + 2], glamourLevel);
-        }
+        // Apply brightness
+        let adjustedGray = gray + brightness;
+
+        // Apply contrast
+        adjustedGray = ((adjustedGray - 128) * (contrast + 100)) / 100 + 128;
+
+        // Apply grain
+        const randomGrain = (Math.random() - 0.5) * grain;
+        adjustedGray += randomGrain;
+
+        // Ensure values are within 0-255 range
+        adjustedGray = Math.max(0, Math.min(255, adjustedGray));
+
+        data[i] = data[i + 1] = data[i + 2] = adjustedGray;
       }
 
       ctx.putImageData(imageData, 0, 0);
@@ -57,8 +65,8 @@ const GlamourTool = ({ image, onClose, onApply }) => {
   };
 
   useEffect(() => {
-    applyGlamourEffect();
-  }, [glamourLevel]);
+    applyBlackAndWhiteEffect();
+  }, [brightness, contrast, grain]);
 
   const handleUndo = () => {
     if (historyIndex > 0) {
@@ -76,31 +84,38 @@ const GlamourTool = ({ image, onClose, onApply }) => {
     }
   };
 
+  const SliderControl = ({
+    label,
+    value,
+    onChange,
+    min = "-100",
+    max = "100",
+  }) => (
+    <div className="mb-0">
+      <label className="text-white capitalize">{label}</label>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value, 10))}
+        className="w-full"
+      />
+      <div className="text-white text-opacity-80 text-xs font-bold font-['Nunito']">
+        {value}
+      </div>
+    </div>
+  );
+
   const handleApply = () => {
-    applyGlamourEffect();
+    applyBlackAndWhiteEffect();
     if (onApply) {
       onApply(previewImageUrl);
     }
   };
 
-  const isSkinTone = (r, g, b) => {
-    return r > 60 && g > 40 && b > 20 && r > g && g > b;
-  };
-
-  const isEyeOrLip = (r, g, b) => {
-    return (r > g + 10 && r > b + 10) || (b > r + 10 && b > g + 10);
-  };
-
-  const smoothColor = (color, level) => {
-    return color + (255 - color) * (level / 200);
-  };
-
-  const enhanceColor = (color, level) => {
-    return Math.min(255, color * (1 + level / 100));
-  };
-
   return (
-    <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex flex-col z-20">
       <div className="flex-grow relative">
         <img
           src={previewImageUrl || image}
@@ -109,34 +124,39 @@ const GlamourTool = ({ image, onClose, onApply }) => {
         />
       </div>
 
-      <div className="bg-gray-800 bg-opacity-50 px-4 py-2 max-w-md mx-auto">
-        <div className="mb-4">
-          <label className="text-white capitalize">Glamour Level</label>
-          <input
-            type="range"
+      <div className="bg-gray-800 bg-opacity-50 px-4 py-2 max-w-md mx-auto w-full">
+        <div className="grid grid-cols-3 gap-2">
+          <SliderControl
+            label="Brightness"
+            value={brightness}
+            onChange={setBrightness}
+          />
+          <SliderControl
+            label="Contrast"
+            value={contrast}
+            onChange={setContrast}
+          />
+          <SliderControl
+            label="Grain"
+            value={grain}
+            onChange={setGrain}
             min="0"
             max="100"
-            value={glamourLevel}
-            onChange={(e) => setGlamourLevel(parseInt(e.target.value, 10))}
-            className="w-full"
           />
-          <div className="text-white text-opacity-80 text-xs font-bold font-['Nunito']">
-            {glamourLevel}
+          <div className="flex col-span-3 justify-between mt-4 ">
+            <button
+              className="bg-red-500 text-white px-4 py-1 rounded"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              className="bg-blue-500 text-white px-4 py-1 rounded"
+              onClick={handleApply}
+            >
+              Apply
+            </button>
           </div>
-        </div>
-        <div className="flex justify-between">
-          <button
-            className="bg-red-500 text-white px-4 py-1 rounded"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            className="bg-blue-500 text-white px-4 py-1 rounded"
-            onClick={handleApply}
-          >
-            Apply
-          </button>
         </div>
       </div>
 
@@ -160,9 +180,8 @@ const GlamourTool = ({ image, onClose, onApply }) => {
           </div>
         </div>
       </div>
-      <canvas ref={canvasRef} style={{ display: "none" }} />
     </div>
   );
 };
 
-export default GlamourTool;
+export default BlackAndWhiteTool;

@@ -154,7 +154,7 @@ const HealingTool = ({ image, onClose, onApply }) => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       ></canvas>
-      <div className="mt-4 flex items-center">
+      <div className="mt-4 flex items-center bg-black">
         <label className="text-white mr-2">Brush Size:</label>
         <input
           type="range"
@@ -165,7 +165,7 @@ const HealingTool = ({ image, onClose, onApply }) => {
           className="mr-4"
         />
         <button
-          className="bg-red-500 text-white px-4 py-2 rounded mr-2"
+          className="bg-red-500 text-white px-4 py-1 rounded mr-2"
           onClick={onClose}
         >
           Cancel
@@ -189,7 +189,7 @@ const HealingTool = ({ image, onClose, onApply }) => {
           </div>
         </div>
         <button
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-blue-500 text-white px-4 py-1 rounded"
           onClick={handleApply}
         >
           Apply

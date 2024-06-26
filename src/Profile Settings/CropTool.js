@@ -66,44 +66,45 @@ const CropTool = ({ image, onClose, onCrop }) => {
     setCropArea((prev) => ({ ...prev, x: newX, y: newY }));
   };
 
-  const handleResizing = (clientX, clientY) => {
-    const { left, top, width, height } =
-      imageRef.current.getBoundingClientRect();
+ const handleResizing = (clientX, clientY) => {
+   const { left, top, width, height } =
+     imageRef.current.getBoundingClientRect();
 
-    let newWidth = cropArea.width;
-    let newHeight = cropArea.height;
-    let newX = cropArea.x;
-    let newY = cropArea.y;
+   let newWidth = cropArea.width;
+   let newHeight = cropArea.height;
+   let newX = cropArea.x;
+   let newY = cropArea.y;
 
-    if (resizeDirection.includes("right")) {
-      newWidth = Math.max(
-        0,
-        Math.min(clientX - left - cropArea.x, width - cropArea.x)
-      );
-    }
-    if (resizeDirection.includes("bottom")) {
-      newHeight = Math.max(
-        0,
-        Math.min(clientY - top - cropArea.y, height - cropArea.y)
-      );
-    }
-    if (resizeDirection.includes("left")) {
-      newWidth = Math.max(0, cropArea.width + cropArea.x - (clientX - left));
-      newX = Math.max(0, Math.min(clientX - left, cropArea.x + cropArea.width));
-    }
-    if (resizeDirection.includes("top")) {
-      newHeight = Math.max(0, cropArea.height + cropArea.y - (clientY - top));
-      newY = Math.max(0, Math.min(clientY - top, cropArea.y + cropArea.height));
-    }
+   if (resizeDirection.includes("right")) {
+     newWidth = Math.max(
+       10,
+       Math.min(clientX - left - cropArea.x, width - cropArea.x)
+     );
+   }
+   if (resizeDirection.includes("bottom")) {
+     newHeight = Math.max(
+       10,
+       Math.min(clientY - top - cropArea.y, height - cropArea.y)
+     );
+   }
+   if (resizeDirection.includes("left")) {
+     const newRight = cropArea.x + cropArea.width;
+     newX = Math.max(0, Math.min(clientX - left, newRight - 10));
+     newWidth = newRight - newX;
+   }
+   if (resizeDirection.includes("top")) {
+     const newBottom = cropArea.y + cropArea.height;
+     newY = Math.max(0, Math.min(clientY - top, newBottom - 10));
+     newHeight = newBottom - newY;
+   }
 
-    setCropArea((prev) => ({
-      ...prev,
-      x: newX,
-      y: newY,
-      width: newWidth,
-      height: newHeight,
-    }));
-  };
+   setCropArea({
+     x: newX,
+     y: newY,
+     width: newWidth,
+     height: newHeight,
+   });
+ };
 
   const handleMouseUp = () => {
     setIsDragging(false);
@@ -123,15 +124,26 @@ const CropTool = ({ image, onClose, onCrop }) => {
     const scaleX = img.naturalWidth / img.width;
     const scaleY = img.naturalHeight / img.height;
 
-    canvas.width = cropArea.width * scaleX;
-    canvas.height = cropArea.height * scaleY;
+    const cropX = Math.max(0, cropArea.x * scaleX);
+    const cropY = Math.max(0, cropArea.y * scaleY);
+    const cropWidth = Math.min(
+      cropArea.width * scaleX,
+      img.naturalWidth - cropX
+    );
+    const cropHeight = Math.min(
+      cropArea.height * scaleY,
+      img.naturalHeight - cropY
+    );
+
+    canvas.width = cropWidth;
+    canvas.height = cropHeight;
 
     ctx.drawImage(
       img,
-      cropArea.x * scaleX,
-      cropArea.y * scaleY,
-      cropArea.width * scaleX,
-      cropArea.height * scaleY,
+      cropX,
+      cropY,
+      cropWidth,
+      cropHeight,
       0,
       0,
       canvas.width,

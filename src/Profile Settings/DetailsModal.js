@@ -196,13 +196,13 @@ const DetailsModal = ({ image, onClose, onApply }) => {
           ))}
           <div className="flex justify-between col-span-2">
             <button
-              className="bg-red-500 text-white px-4 py-2 rounded"
+              className="bg-red-500 text-white px-4 py-1 rounded"
               onClick={onClose}
             >
               Cancel
             </button>
             <button
-              className="bg-blue-500 text-white px-4 py-2 rounded"
+              className="bg-blue-500 text-white px-4 py-1 rounded"
               onClick={handleApply}
             >
               Apply

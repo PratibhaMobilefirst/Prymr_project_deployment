@@ -2,14 +2,17 @@ import React, { useState, useEffect } from "react";
 import undo from "../assets/images/undo.svg";
 import redo from "../assets/images/redo.svg";
 
-const DramaTool = ({ image, onClose, onApply }) => {
+const VintageTool = ({ image, onClose, onApply }) => {
+  const [style, setStyle] = useState(1);
   const [strength, setStrength] = useState(50);
-  const [saturation, setSaturation] = useState(50);
+  const [brightness, setBrightness] = useState(0);
+  const [saturation, setSaturation] = useState(0);
+  const [contrast, setContrast] = useState(0);
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
-  const applyDramaEffect = () => {
+  const applyVintageEffect = () => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const img = new Image();
@@ -25,23 +28,57 @@ const DramaTool = ({ image, onClose, onApply }) => {
       const data = imageData.data;
 
       for (let i = 0; i < data.length; i += 4) {
-        // Apply strength (contrast)
-        const factor = (259 * (strength + 255)) / (255 * (259 - strength));
-        data[i] = factor * (data[i] - 128) + 128;
-        data[i + 1] = factor * (data[i + 1] - 128) + 128;
-        data[i + 2] = factor * (data[i + 2] - 128) + 128;
+        // Apply vintage style
+        let r = data[i],
+          g = data[i + 1],
+          b = data[i + 2];
+
+        // Vintage color adjustments based on style
+        switch (style) {
+          case 1: // Sepia-like
+            r = r * 0.393 + g * 0.769 + b * 0.189;
+            g = r * 0.349 + g * 0.686 + b * 0.168;
+            b = r * 0.272 + g * 0.534 + b * 0.131;
+            break;
+          case 2: // Cool blue
+            r *= 0.9;
+            b *= 1.1;
+            break;
+          case 3: // Warm yellow
+            r *= 1.1;
+            g *= 1.1;
+            b *= 0.9;
+            break;
+        }
+
+        // Apply strength
+        const factor = strength / 100;
+        r = r * factor + data[i] * (1 - factor);
+        g = g * factor + data[i + 1] * (1 - factor);
+        b = b * factor + data[i + 2] * (1 - factor);
+
+        // Apply brightness
+        r += brightness;
+        g += brightness;
+        b += brightness;
+
+        // Apply contrast
+        const contrastFactor =
+          (259 * (contrast + 255)) / (255 * (259 - contrast));
+        r = contrastFactor * (r - 128) + 128;
+        g = contrastFactor * (g - 128) + 128;
+        b = contrastFactor * (b - 128) + 128;
 
         // Apply saturation
-        const gray =
-          0.2989 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        data[i] = gray + (saturation / 50) * (data[i] - gray);
-        data[i + 1] = gray + (saturation / 50) * (data[i + 1] - gray);
-        data[i + 2] = gray + (saturation / 50) * (data[i + 2] - gray);
+        const gray = 0.2989 * r + 0.587 * g + 0.114 * b;
+        r = gray + (saturation / 100) * (r - gray);
+        g = gray + (saturation / 100) * (g - gray);
+        b = gray + (saturation / 100) * (b - gray);
 
         // Ensure values are within 0-255 range
-        for (let j = 0; j < 3; j++) {
-          data[i + j] = Math.max(0, Math.min(255, data[i + j]));
-        }
+        data[i] = Math.max(0, Math.min(255, r));
+        data[i + 1] = Math.max(0, Math.min(255, g));
+        data[i + 2] = Math.max(0, Math.min(255, b));
       }
 
       ctx.putImageData(imageData, 0, 0);
@@ -63,8 +100,8 @@ const DramaTool = ({ image, onClose, onApply }) => {
   };
 
   useEffect(() => {
-    applyDramaEffect();
-  }, [strength, saturation]);
+    applyVintageEffect();
+  }, [style, strength, brightness, saturation, contrast]);
 
   const handleUndo = () => {
     if (historyIndex > 0) {
@@ -86,7 +123,7 @@ const DramaTool = ({ image, onClose, onApply }) => {
     label,
     value,
     onChange,
-    min = "0",
+    min = "-100",
     max = "100",
   }) => (
     <div className="mb-0">
@@ -106,14 +143,14 @@ const DramaTool = ({ image, onClose, onApply }) => {
   );
 
   const handleApply = () => {
-    applyDramaEffect();
+    applyVintageEffect();
     if (onApply) {
       onApply(previewImageUrl);
     }
   };
 
   return (
-    <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex flex-col z-20">
       <div className="flex-grow relative">
         <img
           src={previewImageUrl || image}
@@ -122,19 +159,46 @@ const DramaTool = ({ image, onClose, onApply }) => {
         />
       </div>
 
-      <div className="bg-gray-800 bg-opacity-50 px-4 max-w-md mx-auto">
-        <div className="grid grid-cols-2 gap-1">
-          <SliderControl
-            label="Strength"
-            value={strength}
-            onChange={setStrength}
-          />
-          <SliderControl
-            label="Saturation"
-            value={saturation}
-            onChange={setSaturation}
-          />
-          <div className="col-span-2 flex justify-between mt-4">
+      <div className="bg-gray-800 bg-opacity-50 px-4 py-1 max-w-md mx-auto w-full">
+        <div className="grid grid-cols-1 gap-2">
+          <div className="flex justify-between mb-1">
+            {[1, 2, 3].map((styleNum) => (
+              <button
+                key={styleNum}
+                className={`px-4 py-2 rounded ${
+                  style === styleNum ? "bg-blue-500" : "bg-gray-500"
+                } text-white`}
+                onClick={() => setStyle(styleNum)}
+              >
+                Style {styleNum}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <SliderControl
+              label="Strength"
+              value={strength}
+              onChange={setStrength}
+              min="0"
+              max="100"
+            />
+            <SliderControl
+              label="Brightness"
+              value={brightness}
+              onChange={setBrightness}
+            />
+            <SliderControl
+              label="Saturation"
+              value={saturation}
+              onChange={setSaturation}
+            />
+            <SliderControl
+              label="Contrast"
+              value={contrast}
+              onChange={setContrast}
+            />
+          </div>
+          <div className="flex justify-between mt-2">
             <button
               className="bg-red-500 text-white px-4 py-1 rounded"
               onClick={onClose}
@@ -142,7 +206,7 @@ const DramaTool = ({ image, onClose, onApply }) => {
               Cancel
             </button>
             <button
-              className="bg-blue-500 text-white px-4 rounded"
+              className="bg-blue-500 text-white px-4 py-1 rounded"
               onClick={handleApply}
             >
               Apply
@@ -175,4 +239,4 @@ const DramaTool = ({ image, onClose, onApply }) => {
   );
 };
 
-export default DramaTool;
+export default VintageTool;

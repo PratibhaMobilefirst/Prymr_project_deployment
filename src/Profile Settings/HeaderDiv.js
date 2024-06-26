@@ -5,7 +5,7 @@ import Play from "../assets/images/Play.svg";
 
 const HeaderDiv = () => {
   return (
-    <div className="w-full h-auto flex justify-between px-5 py-5 bg-black fixed top-0 z-10">
+    <div className=" w-full bg-black py-5 px-5 flex justify-between">
       <div className="flex items-center">
         <img className="w-[31px] h-[31px]" src={left_arrow} alt="back" />
         <div className="text-white text-[11px] font-bold capitalize tracking-tight ml-2">

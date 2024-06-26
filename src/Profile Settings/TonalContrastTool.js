@@ -118,16 +118,7 @@ const TonalContrastTool = ({ image, onClose, onApply }) => {
   };
 
   return (
-    <div className="absolute inset-0 bg-black bg-opacity-75 flex flex-col">
-      <div className="w-full h-[67px] p-5 flex items-center justify-between">
-        <div className="w-6 h-6 relative cursor-pointer" onClick={onClose}>
-          <img src={cross} alt="close" />
-        </div>
-        <div className="text-white text-xl font-bold font-['Nunito']">
-          Tonal Contrast
-        </div>
-      </div>
-
+    <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col">
       <div className="flex-grow relative">
         <img
           src={previewImageUrl || image}
@@ -136,12 +127,12 @@ const TonalContrastTool = ({ image, onClose, onApply }) => {
         />
       </div>
 
-      <div className="bg-gray-800 px-4 py-2 max-w-md mx-auto">
-        <div className="grid grid-cols-2 gap-1">
+      <div className="bg-gray-800 bg-opacity-30 px-4 py-2 max-w-md mx-auto">
+        <div className="grid grid-cols-3 gap-1">
           <ContrastSlider
             label="High Contrast"
-            value={highContrast}
-            onChange={setHighContrast}
+            value={lowContrast}
+            onChange={setLowContrast}
           />
           <ContrastSlider
             label="Mid Contrast"
@@ -150,18 +141,18 @@ const TonalContrastTool = ({ image, onClose, onApply }) => {
           />
           <ContrastSlider
             label="Low Contrast"
-            value={lowContrast}
-            onChange={setLowContrast}
+            value={highContrast}
+            onChange={setHighContrast}
           />
-          <div className="col-span-2 flex justify-between">
+          <div className="col-span-3 flex justify-between">
             <button
-              className="bg-red-500 text-white px-4 py-2 rounded"
+              className="bg-red-500 text-white px-4 py-1 rounded"
               onClick={onClose}
             >
               Cancel
             </button>
             <button
-              className="bg-blue-500 text-white px-4 py-2 rounded"
+              className="bg-blue-500 text-white px-4 py-1 rounded"
               onClick={handleApply} // Call handleApply instead of applyTonalContrast directly
             >
               Apply

@@ -30,8 +30,8 @@ const toolList = [
   { name: "White Balances", img: swatch },
   { name: "Crop", img: crop },
   { name: "Rotate", img: rotate },
-  { name: "Perspective", img: rectangle_group },
-  { name: "Expand", img: full_screen },
+  // { name: "Perspective", img: rectangle_group },
+  // { name: "Expand", img: full_screen },
   { name: "Selective", img: selective },
   { name: "Brush", img: paint_brush },
   { name: "Healing", img: puzzle },
@@ -66,6 +66,10 @@ const SelectTools = ({
   onGrainyFilm,
   onRetrolux,
   onDrama,
+  onHDRScape,
+  onBlackAndWhite,
+  onVintage,
+  onGrunge,
 }) => {
   const handleToolClick = (toolName) => {
     onClose();
@@ -101,6 +105,14 @@ const SelectTools = ({
       onRetrolux();
     } else if (toolName === "Drama") {
       onDrama();
+    } else if (toolName === "HDR Scape") {
+      onHDRScape();
+    } else if (toolName === "Black & White") {
+      onBlackAndWhite();
+    } else if (toolName === "Vintage") {
+      onVintage();
+    } else if (toolName === "Grunge") {
+      onGrunge();
     }
   };
 

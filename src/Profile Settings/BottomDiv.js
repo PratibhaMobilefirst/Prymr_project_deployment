@@ -26,7 +26,7 @@ const BottomDiv = ({
   onBrush,
 }) => {
   return (
-    <div className="w-full h-auto fixed bottom-0 bg-black pt-2">
+    <div className="w-full bg-black pt-2">
       <div className="flex justify-between text-gray-400 ml-[10px] mr-[23px]">
         <div className="w-[122px] h-[29px] pl-[13px] pr-2 py-[3px] rounded-[35px] border-neutral-500 justify-center items-center gap-2 inline-flex">
           <div className="w-[25px] h-[25px] relative">

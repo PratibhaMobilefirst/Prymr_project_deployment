@@ -114,7 +114,7 @@ const BrushTool = ({ image, onClose, onBrush }) => {
         />
       </div>
 
-      <div className="bg-black bg-opacity-50 rounded-lg p-2 max-w-md w-full sm:w-50 h-auto">
+      <div className="bg-gray-800 bg-opacity-50 p-2 max-w-md w-full sm:w-50 h-auto">
         <div className="flex justify-between items-center mb-1">
           <label className="text-white mr-2">Size:</label>
           <input
@@ -148,13 +148,13 @@ const BrushTool = ({ image, onClose, onBrush }) => {
         </div>
         <div className="flex justify-between mt-2">
           <button
-            className="bg-red-500 text-white px-4 py-2 rounded"
+            className="bg-red-500 text-white px-4 py-1 rounded"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
-            className="bg-green-500 text-white px-4 py-2 rounded"
+            className="bg-green-500 text-white px-4 py-1 rounded"
             onClick={handleApplyChanges}
           >
             Apply

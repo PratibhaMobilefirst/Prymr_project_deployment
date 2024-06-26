@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Frame from "../assets/images/Frame.png";
 import HeaderDiv from "./HeaderDiv";
 import BottomDiv from "./BottomDiv";
@@ -17,12 +17,18 @@ import GlamourTool from "./GlamourTool";
 import GrainyFilmTool from "./GrainyFilmTool";
 import RetroluxTool from "./RetroluxTool";
 import DramaTool from "./DramaTool";
+import RotateTool from "./RotateTool";
+import TuneImageTool from "./TuneImageTool";
+import HDRScapeTool from "./HDRScapeTool";
+import BlackAndWhiteTool from "./BlackAndWhiteTool";
+import VintageTool from "./VintageTool";
+import GrungeTool from "./GrungeTool";
 
 const BoardEdit = () => {
   const [showTools, setShowTools] = useState(false);
-  const [rotation, setRotation] = useState(0);
+  const [showTuneImageTool, setShowTuneImageTool] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
   const [isCropping, setIsCropping] = useState(false);
-  const [isTuning, setIsTuning] = useState(false);
   const [isBrushing, setIsBrushing] = useState(false);
   const [isSelective, setIsSelective] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -36,22 +42,21 @@ const BoardEdit = () => {
   const [isGrainyFilmOpen, setIsGrainyFilmOpen] = useState(false);
   const [isRetroluxOpen, setIsRetroluxOpen] = useState(false);
   const [isDramaOpen, setIsDramaOpen] = useState(false);
+  const [isHDRScapeOpen, setIsHDRScapeOpen] = useState(false);
+  const [isBlackAndWhiteOpen, setIsBlackAndWhiteOpen] = useState(false);
+  const [isVintageOpen, setIsVintageOpen] = useState(false);
+  const [isGrungeOpen, setIsGrungeOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState(Frame);
-  const [tuneValues, setTuneValues] = useState({
-    brightness: 0,
-    contrast: 0,
-    saturation: 0,
-    highlights: 0,
-    shadows: 0,
-    warmth: 0,
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
   });
-
   const handleToggleTools = () => {
     setShowTools(!showTools);
   };
 
   const handleRotate = () => {
-    setRotation((prevRotation) => (prevRotation + 90) % 360);
+    setIsRotating(true);
   };
 
   const handleCrop = () => {
@@ -59,7 +64,7 @@ const BoardEdit = () => {
   };
 
   const handleTuneImage = () => {
-    setIsTuning(!isTuning);
+    setShowTuneImageTool(true);
   };
 
   const handleSelective = () => {
@@ -68,68 +73,6 @@ const BoardEdit = () => {
 
   const handleBrush = () => {
     setIsBrushing(!isBrushing);
-  };
-
-  const handleSliderChange = (param, value) => {
-    setTuneValues({ ...tuneValues, [param]: value });
-  };
-
-  const resetTuneValue = (param) => {
-    setTuneValues({ ...tuneValues, [param]: 0 });
-  };
-
-  const applyTuneAdjustments = () => {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-    img.src = currentImage;
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-
-      // Apply brightness, contrast, saturation, and warmth
-      ctx.filter = `
-      brightness(${100 + tuneValues.brightness}%)
-      contrast(${100 + tuneValues.contrast}%)
-      saturate(${100 + tuneValues.saturation}%)
-      hue-rotate(${tuneValues.warmth}deg)
-    `;
-      ctx.drawImage(canvas, 0, 0);
-
-      // Apply shadows and highlights
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-
-        // Calculate luminance
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-        // Apply shadows
-        if (luminance < 0.5) {
-          const shadowFactor = 1 + tuneValues.shadows / 100;
-          data[i] *= shadowFactor;
-          data[i + 1] *= shadowFactor;
-          data[i + 2] *= shadowFactor;
-        }
-
-        // Apply highlights
-        if (luminance > 0.5) {
-          const highlightFactor = 1 + tuneValues.highlights / 100;
-          data[i] = Math.min(255, data[i] * highlightFactor);
-          data[i + 1] = Math.min(255, data[i + 1] * highlightFactor);
-          data[i + 2] = Math.min(255, data[i + 2] * highlightFactor);
-        }
-      }
-      ctx.putImageData(imageData, 0, 0);
-
-      const newImageDataUrl = canvas.toDataURL("image/png");
-      setCurrentImage(newImageDataUrl);
-      setIsTuning(false);
-    };
   };
 
   const handleDetails = () => {
@@ -185,39 +128,29 @@ const BoardEdit = () => {
     setIsDramaOpen(!isDramaOpen);
   };
 
-  const calculateImageStyle = () => {
+  const handleHDRScape = () => {
+    setIsHDRScapeOpen(!isHDRScapeOpen);
+  };
+
+  const handleBlackAndWhite = () => {
+    setIsBlackAndWhiteOpen(!isBlackAndWhiteOpen);
+  };
+
+  const handleVintage = () => {
+    setIsVintageOpen(!isVintageOpen);
+  };
+
+  const handleGrunge = () => {
+    setIsGrungeOpen(!isGrungeOpen);
+  };
+
+  const calculateImageStyle = useCallback(() => {
     const img = new Image();
     img.src = currentImage;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    const imgAspect = img.width / img.height;
-    const windowAspect = windowWidth / windowHeight;
+    const windowWidth = windowSize.width;
+    const windowHeight = windowSize.height;
 
     let width, height, top, left;
-
-    if (rotation % 180 === 0) {
-      // Image is in normal orientation or upside down
-      if (imgAspect > windowAspect) {
-        // Image is wider than the window
-        width = windowWidth;
-        height = width / imgAspect;
-      } else {
-        // Image is taller than the window
-        height = windowHeight;
-        width = height * imgAspect;
-      }
-    } else {
-      // Image is rotated 90 or 270 degrees
-      if (imgAspect > windowAspect) {
-        // Image is wider than the window
-        height = windowWidth;
-        width = height * imgAspect;
-      } else {
-        // Image is taller than the window
-        width = windowHeight;
-        height = width / imgAspect;
-      }
-    }
 
     top = (windowHeight - height) / 2;
     left = (windowWidth - width) / 2;
@@ -227,20 +160,42 @@ const BoardEdit = () => {
       height: `${height}px`,
       top: `${top}px`,
       left: `${left}px`,
-      transform: `rotate(${rotation}deg)`,
       position: "absolute",
     };
-  };
+  }, [currentImage, windowSize]);
 
   useEffect(() => {
     const imgStyle = calculateImageStyle();
     const imgElement = document.getElementById("imageFrame");
-    Object.assign(imgElement.style, imgStyle);
-  }, [currentImage, rotation]);
+    if (imgElement) {
+      Object.assign(imgElement.style, imgStyle);
+    }
+  }, [calculateImageStyle]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    let resizeTimer;
+    const debouncedHandleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(handleResize, 100);
+    };
+
+    window.addEventListener("resize", debouncedHandleResize);
+
+    return () => {
+      window.removeEventListener("resize", debouncedHandleResize);
+    };
+  }, []);
 
   return (
-    <div className="bg-black h-screen flex flex-col relative">
-      {!isTuning &&
+    <div className="bg-black h-screen flex flex-col">
+      {!showTuneImageTool &&
         !isCropping &&
         !isBrushing &&
         !isSelective &&
@@ -249,27 +204,21 @@ const BoardEdit = () => {
         !showWhiteBalancesModal &&
         !isPerspectiveOpen &&
         !isGrainyFilmOpen &&
-        !isRetroluxOpen && <HeaderDiv />}
-      <div
-        className={`flex-grow flex justify-center items-center relative ${
-          isTuning ? "pb-48" : ""
-        }`}
-      >
+        !isRetroluxOpen &&
+        !isTonalContrastOpen &&
+        !isGlamourOpen &&
+        !isDramaOpen && (
+          <div>
+            <HeaderDiv />
+          </div>
+        )}
+      <div className="flex-grow flex justify-center items-center relative overflow-hidden">
         <div className="absolute inset-0 flex justify-center items-center">
           <img
             id="imageFrame"
             src={currentImage}
             alt="Frame"
-            className="object-contain"
-            style={{
-              filter: `
-                brightness(${100 + tuneValues.brightness}%)
-                contrast(${100 + tuneValues.contrast}%)
-                saturate(${100 + tuneValues.saturation}%)
-                hue-rotate(${tuneValues.warmth}deg)
-                
-              `,
-            }}
+            className="max-w-full max-h-full object-contain"
           />
           {isSelective && (
             <SelectiveTool
@@ -281,61 +230,9 @@ const BoardEdit = () => {
               }}
             />
           )}
-          {isTuning && (
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4">
-              <div className="bg-gray-800 bg-opacity-10 rounded-lg p-4 max-w-md mx-auto">
-                <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(tuneValues).map(([param, value]) => (
-                    <div key={param} className="mb-2">
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="text-white text-sm capitalize">
-                          {param}
-                        </label>
-                        <div className="flex items-center">
-                          <span className="text-white text-xs mr-2">
-                            {value}
-                          </span>
-                          <button
-                            className="bg-gray-600 text-white text-xs px-2 py-1 rounded"
-                            onClick={() => resetTuneValue(param)}
-                          >
-                            Reset
-                          </button>
-                        </div>
-                      </div>
-                      <input
-                        type="range"
-                        min="-100"
-                        max="100"
-                        value={value}
-                        onChange={(e) =>
-                          handleSliderChange(param, parseInt(e.target.value))
-                        }
-                        className="w-full"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between mt-4">
-                  <button
-                    className="bg-red-500 text-white px-4 py-2 rounded text-sm"
-                    onClick={() => setIsTuning(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="bg-blue-500 text-white px-4 py-2 rounded text-sm"
-                    onClick={applyTuneAdjustments}
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
-      {!isTuning &&
+      {!showTuneImageTool &&
         !isCropping &&
         !isBrushing &&
         !isSelective &&
@@ -344,7 +241,11 @@ const BoardEdit = () => {
         !showWhiteBalancesModal &&
         !isPerspectiveOpen &&
         !isGrainyFilmOpen &&
-        !isRetroluxOpen && (
+        !isRetroluxOpen &&
+        !isRotating &&
+        !isTonalContrastOpen &&
+        !isGlamourOpen &&
+        !isDramaOpen && (
           <BottomDiv
             onToggleTools={handleToggleTools}
             onRotate={handleRotate}
@@ -374,6 +275,10 @@ const BoardEdit = () => {
             onGrainyFilm={handleGrainyFilm}
             onRetrolux={handleRetrolux}
             onDrama={handleDrama}
+            onHDRScape={handleHDRScape}
+            onBlackAndWhite={handleBlackAndWhite}
+            onVintage={handleVintage}
+            onGrunge={handleGrunge}
           />
         </div>
       )}
@@ -497,6 +402,66 @@ const BoardEdit = () => {
           onApply={(newImageDataUrl) => {
             setCurrentImage(newImageDataUrl);
             setIsDramaOpen(false);
+          }}
+        />
+      )}
+      {isRotating && (
+        <RotateTool
+          image={currentImage}
+          onClose={() => setIsRotating(false)}
+          onRotate={(newImage) => {
+            setCurrentImage(newImage);
+            setIsRotating(false);
+          }}
+        />
+      )}
+      {showTuneImageTool && (
+        <TuneImageTool
+          image={currentImage}
+          onClose={() => setShowTuneImageTool(false)}
+          onApply={(adjustedImage) => {
+            setCurrentImage(adjustedImage);
+            setShowTuneImageTool(false);
+          }}
+        />
+      )}{" "}
+      {isHDRScapeOpen && (
+        <HDRScapeTool
+          image={currentImage}
+          onClose={() => setIsHDRScapeOpen(false)}
+          onApply={(newImageDataUrl) => {
+            setCurrentImage(newImageDataUrl);
+            setIsHDRScapeOpen(false);
+          }}
+        />
+      )}
+      {isBlackAndWhiteOpen && (
+        <BlackAndWhiteTool
+          image={currentImage}
+          onClose={() => setIsBlackAndWhiteOpen(false)}
+          onApply={(newImageDataUrl) => {
+            setCurrentImage(newImageDataUrl);
+            setIsBlackAndWhiteOpen(false);
+          }}
+        />
+      )}
+      {isVintageOpen && (
+        <VintageTool
+          image={currentImage}
+          onClose={() => setIsVintageOpen(false)}
+          onApply={(newImageDataUrl) => {
+            setCurrentImage(newImageDataUrl);
+            setIsVintageOpen(false);
+          }}
+        />
+      )}
+      {isGrungeOpen && (
+        <GrungeTool
+          image={currentImage}
+          onClose={() => setIsGrungeOpen(false)}
+          onApply={(newImageDataUrl) => {
+            setCurrentImage(newImageDataUrl);
+            setIsGrungeOpen(false);
           }}
         />
       )}

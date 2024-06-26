@@ -105,7 +105,7 @@ const SelectiveTool = ({ image, onClose, onApply }) => {
           className="max-w-full max-h-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
         />
       </div>
-      <div className="bg-gray-800 bg-opacity-10 p-4 max-w-md mx-auto">
+      <div className="bg-gray-800 bg-opacity-50 p-4 max-w-md mx-auto">
         <div className="grid grid-cols-2 gap-2">
           <div className="mb-2">
             <label className="text-white">Radius</label>
@@ -133,13 +133,13 @@ const SelectiveTool = ({ image, onClose, onApply }) => {
           ))}
           <div className="flex justify-between col-span-2">
             <button
-              className="bg-red-500 text-white px-4 py-2 rounded"
+              className="bg-red-500 text-white px-4 py-1 rounded"
               onClick={onClose}
             >
               Cancel
             </button>
             <button
-              className="bg-blue-500 text-white px-4 py-2 rounded"
+              className="bg-blue-500 text-white px-4 py-1 rounded"
               onClick={handleApply}
             >
               Apply
