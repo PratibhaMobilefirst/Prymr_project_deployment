@@ -207,7 +207,12 @@ const BoardEdit = () => {
         !isRetroluxOpen &&
         !isTonalContrastOpen &&
         !isGlamourOpen &&
-        !isDramaOpen && (
+        !isDramaOpen &&
+        !isHealing &&
+        !isGrungeOpen &&
+        !isVintageOpen &&
+        !isBlackAndWhiteOpen &&
+        !isHDRScapeOpen && (
           <div>
             <HeaderDiv />
           </div>
@@ -245,7 +250,12 @@ const BoardEdit = () => {
         !isRotating &&
         !isTonalContrastOpen &&
         !isGlamourOpen &&
-        !isDramaOpen && (
+        !isDramaOpen &&
+        !isHealing &&
+        !isGrungeOpen &&
+        !isVintageOpen &&
+        !isBlackAndWhiteOpen &&
+        !isHDRScapeOpen && (
           <BottomDiv
             onToggleTools={handleToggleTools}
             onRotate={handleRotate}

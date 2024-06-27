@@ -154,7 +154,7 @@ const HealingTool = ({ image, onClose, onApply }) => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       ></canvas>
-      <div className="mt-4 flex items-center bg-black">
+      <div className="mt-4 flex flex-wrap items-center bg-black">
         <label className="text-white mr-2">Brush Size:</label>
         <input
           type="range"

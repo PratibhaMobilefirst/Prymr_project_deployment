@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import undo from "../assets/images/undo.svg";
+import redo from "../assets/images/redo.svg";
 
 const DetailsModal = ({ image, onClose, onApply }) => {
   const [adjustments, setAdjustments] = useState({
@@ -9,12 +11,19 @@ const DetailsModal = ({ image, onClose, onApply }) => {
   });
   const [previewImage, setPreviewImage] = useState(image);
   const canvasRef = useRef(null);
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  useEffect(() => {
+    setHistory([adjustments]);
+    setHistoryIndex(0);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const img = new Image();
-    img.crossOrigin = "Anonymous"; // Handle CORS issues
+    img.crossOrigin = "Anonymous";
     img.src = previewImage;
     img.onload = () => {
       canvas.width = img.width;
@@ -164,7 +173,29 @@ const DetailsModal = ({ image, onClose, onApply }) => {
   };
 
   const handleAdjustmentChange = (type, value) => {
-    setAdjustments((prev) => ({ ...prev, [type]: parseInt(value, 10) }));
+    const newAdjustments = { ...adjustments, [type]: parseInt(value, 10) };
+    setAdjustments(newAdjustments);
+    updateHistory(newAdjustments);
+  };
+
+  const updateHistory = (newAdjustments) => {
+    const newHistory = [...history.slice(0, historyIndex + 1), newAdjustments];
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+      setAdjustments(history[historyIndex - 1]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      setAdjustments(history[historyIndex + 1]);
+    }
   };
 
   const handleApply = () => {
@@ -179,10 +210,10 @@ const DetailsModal = ({ image, onClose, onApply }) => {
           className="max-w-full max-h-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
         />
       </div>
-      <div className="bg-gray-800 bg-opacity-10 p-4 max-w-md mx-auto">
+      <div className="bg-gray-800 bg-opacity-10 p-2 max-w-md mx-auto">
         <div className="grid grid-cols-2 gap-2">
           {Object.entries(adjustments).map(([key, value]) => (
-            <div key={key} className="mb-2">
+            <div key={key} className="mb-1">
               <label className="text-white capitalize">{key}</label>
               <input
                 type="range"
@@ -207,6 +238,26 @@ const DetailsModal = ({ image, onClose, onApply }) => {
             >
               Apply
             </button>
+          </div>
+        </div>
+      </div>
+      <div className="w-full bg-black flex justify-center items-center py-1">
+        <div
+          className="px-2 flex flex-col items-center cursor-pointer"
+          onClick={handleUndo}
+        >
+          <img src={undo} alt="undo" className="w-5 h-5" />
+          <div className="text-zinc-400 text-[11px] font-bold font-['Nunito'] capitalize tracking-tight">
+            Undo
+          </div>
+        </div>
+        <div
+          className="px-2 flex flex-col items-center cursor-pointer"
+          onClick={handleRedo}
+        >
+          <img src={redo} alt="redo" className="w-5 h-5" />
+          <div className="text-zinc-400 text-[11px] font-bold font-['Nunito'] capitalize tracking-tight">
+            Redo
           </div>
         </div>
       </div>

@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import undo from "../assets/images/undo.svg";
+import redo from "../assets/images/redo.svg";
 
 const TuneImageTool = ({ image, onClose, onApply }) => {
   const [adjustments, setAdjustments] = useState({
@@ -10,6 +12,8 @@ const TuneImageTool = ({ image, onClose, onApply }) => {
     highlights: 0,
     shadows: 0,
   });
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
 
@@ -17,13 +21,15 @@ const TuneImageTool = ({ image, onClose, onApply }) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const img = new Image();
-    img.crossOrigin = "Anonymous"; // Handle CORS issues
+    img.crossOrigin = "Anonymous";
     img.src = image;
     img.onload = () => {
       imageRef.current = img;
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0, img.width, img.height);
+      setHistory([{ ...adjustments }]);
+      setHistoryIndex(0);
     };
   }, [image]);
 
@@ -110,7 +116,29 @@ const TuneImageTool = ({ image, onClose, onApply }) => {
   }, [applyAdjustments]);
 
   const handleAdjustmentChange = (type, value) => {
-    setAdjustments((prev) => ({ ...prev, [type]: parseInt(value, 10) }));
+    const newAdjustments = { ...adjustments, [type]: parseInt(value, 10) };
+    setAdjustments(newAdjustments);
+    updateHistory(newAdjustments);
+  };
+
+  const updateHistory = (newAdjustments) => {
+    const newHistory = [...history.slice(0, historyIndex + 1), newAdjustments];
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+      setAdjustments(history[historyIndex - 1]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      setAdjustments(history[historyIndex + 1]);
+    }
   };
 
   const handleApply = () => {
@@ -140,13 +168,33 @@ const TuneImageTool = ({ image, onClose, onApply }) => {
               />
             </div>
           ))}
-          <div className="flex justify-between col-span-3">
+          <div className="flex justify-between items-center col-span-3 bg-black">
             <button
               className="bg-red-500 text-white px-4 py-1 rounded"
               onClick={onClose}
             >
               Cancel
             </button>
+            <div className="flex space-x-2">
+              <div
+                className="px-2 flex flex-col items-center cursor-pointer"
+                onClick={handleUndo}
+              >
+                <img src={undo} alt="undo" className="w-5 h-5" />
+                <div className="text-zinc-400 text-[11px] font-bold font-['Nunito'] capitalize tracking-tight">
+                  Undo
+                </div>
+              </div>
+              <div
+                className="px-2 flex flex-col items-center cursor-pointer"
+                onClick={handleRedo}
+              >
+                <img src={redo} alt="redo" className="w-5 h-5" />
+                <div className="text-zinc-400 text-[11px] font-bold font-['Nunito'] capitalize tracking-tight">
+                  Redo
+                </div>
+              </div>
+            </div>
             <button
               className="bg-blue-500 text-white px-4 py-1 rounded"
               onClick={handleApply}

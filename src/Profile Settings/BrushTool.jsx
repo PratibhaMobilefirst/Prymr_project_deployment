@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import cross from "../assets/images/cross.png";
+import undo from "../assets/images/undo.svg";
+import redo from "../assets/images/redo.svg";
 
 const BrushTool = ({ image, onClose, onBrush }) => {
   const [brushSize, setBrushSize] = useState(10);
@@ -8,6 +10,8 @@ const BrushTool = ({ image, onClose, onBrush }) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const canvasRef = useRef(null);
   const contextRef = useRef(null);
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -19,6 +23,7 @@ const BrushTool = ({ image, onClose, onBrush }) => {
       canvas.width = img.width;
       canvas.height = img.height;
       context.drawImage(img, 0, 0);
+      saveToHistory();
     };
 
     context.lineCap = "round";
@@ -36,6 +41,15 @@ const BrushTool = ({ image, onClose, onBrush }) => {
       context.strokeStyle = `rgba(${r}, ${g}, ${b}, ${brushOpacity})`;
     }
   }, [brushSize, brushColor, brushOpacity]);
+
+  const saveToHistory = () => {
+    const canvas = canvasRef.current;
+    const imageData = canvas.toDataURL("image/png");
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(imageData);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
 
   const startDrawing = (event) => {
     const canvas = canvasRef.current;
@@ -66,6 +80,43 @@ const BrushTool = ({ image, onClose, onBrush }) => {
   const stopDrawing = () => {
     contextRef.current.closePath();
     setIsDrawing(false);
+    saveToHistory();
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      const img = new Image();
+      img.src = history[newIndex];
+      img.onload = () => {
+        contextRef.current.clearRect(
+          0,
+          0,
+          canvasRef.current.width,
+          canvasRef.current.height
+        );
+        contextRef.current.drawImage(img, 0, 0);
+      };
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      const img = new Image();
+      img.src = history[newIndex];
+      img.onload = () => {
+        contextRef.current.clearRect(
+          0,
+          0,
+          canvasRef.current.width,
+          canvasRef.current.height
+        );
+        contextRef.current.drawImage(img, 0, 0);
+      };
+    }
   };
 
   const handleBrushSizeChange = (event) => {
@@ -153,6 +204,26 @@ const BrushTool = ({ image, onClose, onBrush }) => {
           >
             Cancel
           </button>
+          <div className="flex space-x-2">
+            <div
+              className="px-2 flex flex-col items-center cursor-pointer"
+              onClick={handleUndo}
+            >
+              <img src={undo} alt="undo" className="w-5 h-5" />
+              <div className="text-zinc-400 text-[11px] font-bold font-['Nunito'] capitalize tracking-tight">
+                Undo
+              </div>
+            </div>
+            <div
+              className="px-2 flex flex-col items-center cursor-pointer"
+              onClick={handleRedo}
+            >
+              <img src={redo} alt="redo" className="w-5 h-5" />
+              <div className="text-zinc-400 text-[11px] font-bold font-['Nunito'] capitalize tracking-tight">
+                Redo
+              </div>
+            </div>
+          </div>
           <button
             className="bg-green-500 text-white px-4 py-1 rounded"
             onClick={handleApplyChanges}

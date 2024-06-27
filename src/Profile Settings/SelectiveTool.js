@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import undo from "../assets/images/undo.svg";
+import redo from "../assets/images/redo.svg";
 
 const SelectiveTool = ({ image, onClose, onApply }) => {
   const [selectedPoint, setSelectedPoint] = useState(null);
@@ -8,6 +10,8 @@ const SelectiveTool = ({ image, onClose, onApply }) => {
     saturation: 0,
   });
   const [radius, setRadius] = useState(100);
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
 
@@ -15,13 +19,14 @@ const SelectiveTool = ({ image, onClose, onApply }) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const img = new Image();
-    img.crossOrigin = "Anonymous"; // Handle CORS issues
+    img.crossOrigin = "Anonymous";
     img.src = image;
     img.onload = () => {
       imageRef.current = img;
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0, img.width, img.height);
+      updateHistory({ selectedPoint: null, adjustments, radius });
     };
   }, [image]);
 
@@ -59,15 +64,28 @@ const SelectiveTool = ({ image, onClose, onApply }) => {
         const contrast = (adjustments.contrast / 100) * factor + 1;
         const intercept = 128 * (1 - contrast);
         data[i] = Math.min(255, Math.max(0, data[i] * contrast + intercept));
-        data[i + 1] = Math.min(255, Math.max(0, data[i + 1] * contrast + intercept));
-        data[i + 2] = Math.min(255, Math.max(0, data[i + 2] * contrast + intercept));
+        data[i + 1] = Math.min(
+          255,
+          Math.max(0, data[i + 1] * contrast + intercept)
+        );
+        data[i + 2] = Math.min(
+          255,
+          Math.max(0, data[i + 2] * contrast + intercept)
+        );
 
         // Apply saturation
         const sat = (adjustments.saturation / 100) * factor + 1;
-        const gray = 0.2989 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        const gray =
+          0.2989 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
         data[i] = Math.min(255, Math.max(0, gray * (1 - sat) + data[i] * sat));
-        data[i + 1] = Math.min(255, Math.max(0, gray * (1 - sat) + data[i + 1] * sat));
-        data[i + 2] = Math.min(255, Math.max(0, gray * (1 - sat) + data[i + 2] * sat));
+        data[i + 1] = Math.min(
+          255,
+          Math.max(0, gray * (1 - sat) + data[i + 1] * sat)
+        );
+        data[i + 2] = Math.min(
+          255,
+          Math.max(0, gray * (1 - sat) + data[i + 2] * sat)
+        );
       }
     }
 
@@ -85,11 +103,47 @@ const SelectiveTool = ({ image, onClose, onApply }) => {
     const scaleY = canvas.height / rect.height;
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
-    setSelectedPoint({ x, y });
+    const newSelectedPoint = { x, y };
+    setSelectedPoint(newSelectedPoint);
+    updateHistory({ selectedPoint: newSelectedPoint, adjustments, radius });
   };
 
   const handleAdjustmentChange = (type, value) => {
-    setAdjustments((prev) => ({ ...prev, [type]: parseInt(value, 10) }));
+    const newAdjustments = { ...adjustments, [type]: parseInt(value, 10) };
+    setAdjustments(newAdjustments);
+    updateHistory({ selectedPoint, adjustments: newAdjustments, radius });
+  };
+
+  const handleRadiusChange = (value) => {
+    const newRadius = parseInt(value, 10);
+    setRadius(newRadius);
+    updateHistory({ selectedPoint, adjustments, radius: newRadius });
+  };
+
+  const updateHistory = (state) => {
+    const newHistory = [...history.slice(0, historyIndex + 1), state];
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+      const prevState = history[historyIndex - 1];
+      setSelectedPoint(prevState.selectedPoint);
+      setAdjustments(prevState.adjustments);
+      setRadius(prevState.radius);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      const nextState = history[historyIndex + 1];
+      setSelectedPoint(nextState.selectedPoint);
+      setAdjustments(nextState.adjustments);
+      setRadius(nextState.radius);
+    }
   };
 
   const handleApply = () => {
@@ -114,7 +168,7 @@ const SelectiveTool = ({ image, onClose, onApply }) => {
               min="10"
               max="300"
               value={radius}
-              onChange={(e) => setRadius(parseInt(e.target.value, 10))}
+              onChange={(e) => handleRadiusChange(e.target.value)}
               className="w-full"
             />
           </div>
@@ -131,13 +185,33 @@ const SelectiveTool = ({ image, onClose, onApply }) => {
               />
             </div>
           ))}
-          <div className="flex justify-between col-span-2">
+          <div className="flex justify-between items-center col-span-2 bg-black">
             <button
               className="bg-red-500 text-white px-4 py-1 rounded"
               onClick={onClose}
             >
               Cancel
             </button>
+            <div className="flex space-x-2">
+              <div
+                className="px-2 flex flex-col items-center cursor-pointer"
+                onClick={handleUndo}
+              >
+                <img src={undo} alt="undo" className="w-5 h-5" />
+                <div className="text-zinc-400 text-[11px] font-bold font-['Nunito'] capitalize tracking-tight">
+                  Undo
+                </div>
+              </div>
+              <div
+                className="px-2 flex flex-col items-center cursor-pointer"
+                onClick={handleRedo}
+              >
+                <img src={redo} alt="redo" className="w-5 h-5" />
+                <div className="text-zinc-400 text-[11px] font-bold font-['Nunito'] capitalize tracking-tight">
+                  Redo
+                </div>
+              </div>
+            </div>
             <button
               className="bg-blue-500 text-white px-4 py-1 rounded"
               onClick={handleApply}
